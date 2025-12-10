@@ -30,12 +30,30 @@ serve(async (req) => {
       )
     }
 
-    // Update user points atomically
+    // First get the current points
+    const { data: currentProfile, error: getError } = await supabaseClient
+      .from('profiles')
+      .select('points')
+      .eq('id', user_id)
+      .single()
+
+    if (getError) {
+      console.error('Error getting user profile:', getError)
+      return new Response(
+        JSON.stringify({ error: getError.message }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    const newPoints = (currentProfile?.points || 0) + points_to_add
+
+    // Update user points
     const { data, error } = await supabaseClient
       .from('profiles')
-      .update({ 
-        points: supabaseClient.raw(`points + ${points_to_add}`)
-      })
+      .update({ points: newPoints })
       .eq('id', user_id)
       .select('points')
       .single()
@@ -62,7 +80,7 @@ serve(async (req) => {
       }
     )
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Function error:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),

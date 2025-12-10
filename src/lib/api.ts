@@ -94,7 +94,7 @@ export const fetchTaskCategories = async () => {
   return data;
 };
 
-export const createTask = async (task: Task) => {
+export const createTask = async (task: Partial<Task> & { expires_at: string }) => {
   // For admin operations, we need to use auth.admin for RLS bypass
   // Log the task being created for debugging
   console.log('Creating task:', task);
@@ -116,10 +116,13 @@ export const createTask = async (task: Task) => {
       throw new Error('Permission denied: Only admins can create tasks');
     }
     
-    // Admin users can create tasks
+    // Remove category from the task data and get the insert-ready object
+    const { category, id, created_at, updated_at, ...insertData } = task as Task;
+    
+    // Admin users can create tasks - cast to any to avoid type issues with partial data
     const { data, error } = await supabase
       .from('tasks')
-      .insert(task)
+      .insert(insertData as any)
       .select(`
         *,
         category:task_categories(*)

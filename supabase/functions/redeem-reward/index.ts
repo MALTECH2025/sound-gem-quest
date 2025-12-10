@@ -96,10 +96,11 @@ serve(async (req) => {
       );
     }
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in reward redemption:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ success: false, message: `Server error: ${error.message}` }),
+      JSON.stringify({ success: false, message: `Server error: ${errorMessage}` }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
