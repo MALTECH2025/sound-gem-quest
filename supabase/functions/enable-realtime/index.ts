@@ -59,12 +59,13 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Enable realtime error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ 
         success: false, 
-        message: `Unexpected error: ${error.message}`
+        message: `Unexpected error: ${errorMessage}`
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" }, 
