@@ -1,1 +1,22 @@
 project_id = "sljtteaovncgspcszpyx"
+
+[functions.apply-referral-code]
+verify_jwt = false
+
+[functions.increment-user-points]
+verify_jwt = false
+
+[functions.redeem-reward]
+verify_jwt = false
+
+[functions.create-task-submission]
+verify_jwt = false
+
+[functions.cleanup-expired-tasks]
+verify_jwt = false
+
+[functions.spotify-token-exchange]
+verify_jwt = false
+
+[functions.spotify-refresh-token]
+verify_jwt = false
