@@ -18,8 +18,12 @@ export type Database = {
         Row: {
           access_token: string | null
           created_at: string
+          display_name: string | null
+          email: string | null
           expires_at: string | null
           id: string
+          is_premium: boolean | null
+          product: string | null
           refresh_token: string | null
           service_name: string
           service_user_id: string
@@ -29,8 +33,12 @@ export type Database = {
         Insert: {
           access_token?: string | null
           created_at?: string
+          display_name?: string | null
+          email?: string | null
           expires_at?: string | null
           id?: string
+          is_premium?: boolean | null
+          product?: string | null
           refresh_token?: string | null
           service_name: string
           service_user_id: string
@@ -40,8 +48,12 @@ export type Database = {
         Update: {
           access_token?: string | null
           created_at?: string
+          display_name?: string | null
+          email?: string | null
           expires_at?: string | null
           id?: string
+          is_premium?: boolean | null
+          product?: string | null
           refresh_token?: string | null
           service_name?: string
           service_user_id?: string
