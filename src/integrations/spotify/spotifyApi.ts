@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { connectService } from "@/lib/api";
 
 // Constants for Spotify API
 const SPOTIFY_CLIENT_ID = "9590f00f4f6b4fc080b08c85dc699e9f";
@@ -60,7 +59,7 @@ export const handleSpotifyCallback = async (code: string, state: string) => {
   return await exchangeSpotifyCode(code);
 };
 
-// Exchange code for access token
+// Exchange code for access token and save user profile with premium status
 export const exchangeSpotifyCode = async (code: string) => {
   try {
     // Code exchange should be done server-side to protect client secret
@@ -74,20 +73,64 @@ export const exchangeSpotifyCode = async (code: string) => {
       // Connect the Spotify service to the user's account
       const expiresAt = new Date(Date.now() + (data.expires_in * 1000)).toISOString();
       
-      // Get user profile to store Spotify ID
+      // Get user profile to store Spotify ID and premium status
       const userProfile = await getSpotifyUserProfile(data.access_token);
       
-      await connectService(
-        'spotify',
-        data.access_token,
-        data.refresh_token,
-        expiresAt,
-        userProfile.id
-      );
+      // Determine if user is premium
+      const isPremium = userProfile.product === 'premium';
+      
+      // Save to connected_services with premium status
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Check if service already exists for user
+      const { data: existingService } = await supabase
+        .from('connected_services')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('service_name', 'spotify')
+        .single();
+
+      const serviceData = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_at: expiresAt,
+        display_name: userProfile.display_name,
+        email: userProfile.email,
+        product: userProfile.product || 'free',
+        is_premium: isPremium,
+        updated_at: new Date().toISOString()
+      };
+
+      if (existingService) {
+        // Update the existing service
+        const { error: updateError } = await supabase
+          .from('connected_services')
+          .update(serviceData)
+          .eq('id', existingService.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Create a new service connection
+        const { error: insertError } = await supabase
+          .from('connected_services')
+          .insert({
+            user_id: user.id,
+            service_name: 'spotify',
+            service_user_id: userProfile.id,
+            ...serviceData
+          });
+
+        if (insertError) throw insertError;
+      }
       
       return {
         success: true,
-        message: "Successfully connected Spotify account"
+        message: "Successfully connected Spotify account",
+        isPremium,
+        product: userProfile.product
       };
     }
     
