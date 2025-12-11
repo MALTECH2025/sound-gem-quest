@@ -34,7 +34,10 @@ const SpotifyCallback = () => {
         
         if (result.success) {
           setStatus('success');
-          setMessage('Spotify connected successfully!');
+          const premiumMsg = result.isPremium 
+            ? 'You have Spotify Premium! Enjoy exclusive features.' 
+            : 'Connected with Spotify Free. Upgrade for bonus rewards!';
+          setMessage(`Spotify connected successfully! ${premiumMsg}`);
           toast.success('Spotify account connected successfully!');
         } else {
           setStatus('error');

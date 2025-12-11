@@ -14,6 +14,7 @@ import QuickActions from '@/components/dashboard/QuickActions';
 import TaskCard from '@/components/dashboard/TaskCard';
 import MiningWidget from '@/components/dashboard/MiningWidget';
 import ReferralWidget from '@/components/dashboard/ReferralWidget';
+import SpotifyPremiumWidget from '@/components/spotify/SpotifyPremiumWidget';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TaskProps } from '@/types';
 
@@ -210,6 +211,9 @@ const Dashboard = () => {
 
               {/* Right Column - Widgets */}
               <div className="space-y-4 md:space-y-6">
+                {/* Spotify Premium Widget */}
+                <SpotifyPremiumWidget />
+                
                 {/* Mining Widget */}
                 <MiningWidget />
                 
