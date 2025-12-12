@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { AnimatedTransition } from '@/components/ui/AnimatedTransition';
 import { Skeleton } from '@/components/ui/skeleton';
 import Navbar from '@/components/layout/Navbar';
@@ -142,19 +140,14 @@ const Dashboard = () => {
         <main className="flex-grow pt-20 pb-12">
           <div className="container px-4 mx-auto max-w-7xl">
             {/* Welcome Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mb-6"
-            >
+            <div className="mb-6">
               <h1 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Welcome back, {profile?.full_name || profile?.username || 'User'}! 👋
               </h1>
               <p className="text-muted-foreground text-sm md:text-base">
                 Complete tasks below to earn ST Coins. Each task shows clear instructions on how to complete it.
               </p>
-            </motion.div>
+            </div>
 
             {/* Stats Overview with real data */}
             <StatsOverview userStats={userStats} isLoading={userTasksLoading || rewardsLoading} />

@@ -1,5 +1,3 @@
-
-import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from "@/components/theme/theme-provider";
@@ -59,34 +57,6 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const [appReady, setAppReady] = useState(false);
-
-  useEffect(() => {
-    // Simple app initialization without problematic edge function calls
-    const initializeApp = async () => {
-      try {
-        // Add any necessary initialization here
-        console.log('SoundTrump app initializing...');
-      } catch (error) {
-        console.error('Error during app initialization:', error);
-      }
-
-      setTimeout(() => {
-        setAppReady(true);
-      }, 500);
-    };
-
-    initializeApp();
-  }, []);
-
-  if (!appReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-sound-medium border-t-sound-light rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light" storageKey="soundtrump-theme">
