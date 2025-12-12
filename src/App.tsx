@@ -36,6 +36,10 @@ import Settings from '@/pages/Settings';
 import AdminDashboard from '@/pages/admin/Dashboard';
 import AdminUsers from '@/pages/admin/Users';
 import AdminTasks from '@/pages/admin/Tasks';
+import AdminSpotifyStats from '@/pages/admin/SpotifyStats';
+
+// Import Spotify pages
+import SpotifyHistory from '@/pages/SpotifyHistory';
 
 // Import route guards
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -114,12 +118,14 @@ function App() {
                     <Route path="/leaderboard" element={<Leaderboard />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/settings" element={<Settings />} />
+                    <Route path="/spotify-history" element={<SpotifyHistory />} />
                   </Route>
                   
                   <Route element={<AdminRoute />}>
                     <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/admin/users" element={<AdminUsers />} />
                     <Route path="/admin/tasks" element={<AdminTasks />} />
+                    <Route path="/admin/spotify" element={<AdminSpotifyStats />} />
                   </Route>
                   
                   <Route path="*" element={<NotFound />} />

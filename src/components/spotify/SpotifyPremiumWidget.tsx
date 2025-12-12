@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Music, Crown, ExternalLink, RefreshCw } from 'lucide-react';
+import { Music, Crown, ExternalLink, RefreshCw, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { initiateSpotifyAuth, getSpotifyUserProfile } from '@/integrations/spotify/spotifyApi';
 import { useAuth } from '@/context/AuthContext';
@@ -182,16 +183,29 @@ const SpotifyPremiumWidget = () => {
             </p>
           </div>
 
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full"
-            onClick={handleRefreshStatus}
-            disabled={refreshing}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh Status
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1"
+              onClick={handleRefreshStatus}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1"
+              asChild
+            >
+              <Link to="/spotify-history">
+                <History className="h-4 w-4 mr-2" />
+                History
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -238,16 +252,29 @@ const SpotifyPremiumWidget = () => {
           </Button>
         </div>
         
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full"
-          onClick={handleRefreshStatus}
-          disabled={refreshing}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh Status
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={handleRefreshStatus}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            asChild
+          >
+            <Link to="/spotify-history">
+              <History className="h-4 w-4 mr-2" />
+              History
+            </Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
