@@ -148,47 +148,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    // Check for referral code in URL on initial load
-    checkAndApplyReferralFromUrl().then((result) => {
-      if (result?.success) {
-        toast.success(result.message);
-      }
-    });
+    let mounted = true;
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserProfile(session.user.id)
-          .then((profileData) => {
-            // Ensure the profile data matches UserProfile type
-            const typedProfile: UserProfile = {
-              ...profileData,
-              tier: (profileData.tier === 'Premium' ? 'Premium' : 'Free') as "Free" | "Premium",
-              status: (profileData.status === 'Influencer' ? 'Influencer' : 'Normal') as "Normal" | "Influencer",
-              role: (profileData.role || 'user') as "user" | "admin"
-            };
-            setProfile(typedProfile);
-          })
-          .catch(console.error)
-          .finally(() => setIsLoading(false));
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for auth changes
+    // Set up auth state listener FIRST (synchronous callback only)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        if (!mounted) return;
+        
+        // Only synchronous state updates here
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
+        if (!session?.user) {
+          setProfile(null);
+          setIsLoading(false);
+          return;
+        }
+
+        // Defer Supabase calls with setTimeout to prevent deadlock
+        setTimeout(async () => {
+          if (!mounted) return;
+          
           try {
             const profileData = await fetchUserProfile(session.user.id);
-            // Ensure the profile data matches UserProfile type
+            if (!mounted) return;
+            
             const typedProfile: UserProfile = {
               ...profileData,
               tier: (profileData.tier === 'Premium' ? 'Premium' : 'Free') as "Free" | "Premium",
@@ -200,31 +184,69 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Apply pending referral code after login
             if (event === 'SIGNED_IN') {
               const referralResult = await applyPendingReferralCode();
-              if (referralResult?.success) {
+              if (referralResult?.success && mounted) {
                 toast.success(referralResult.message);
                 // Refresh profile to show updated points
                 const updatedProfileData = await fetchUserProfile(session.user.id);
-                const updatedTypedProfile: UserProfile = {
-                  ...updatedProfileData,
-                  tier: (updatedProfileData.tier === 'Premium' ? 'Premium' : 'Free') as "Free" | "Premium",
-                  status: (updatedProfileData.status === 'Influencer' ? 'Influencer' : 'Normal') as "Normal" | "Influencer",
-                  role: (updatedProfileData.role || 'user') as "user" | "admin"
-                };
-                setProfile(updatedTypedProfile);
+                if (mounted) {
+                  const updatedTypedProfile: UserProfile = {
+                    ...updatedProfileData,
+                    tier: (updatedProfileData.tier === 'Premium' ? 'Premium' : 'Free') as "Free" | "Premium",
+                    status: (updatedProfileData.status === 'Influencer' ? 'Influencer' : 'Normal') as "Normal" | "Influencer",
+                    role: (updatedProfileData.role || 'user') as "user" | "admin"
+                  };
+                  setProfile(updatedTypedProfile);
+                }
               }
             }
           } catch (error) {
             console.error('Error fetching profile:', error);
+          } finally {
+            if (mounted) setIsLoading(false);
           }
-        } else {
-          setProfile(null);
-        }
-        
-        setIsLoading(false);
+        }, 0);
       }
     );
 
-    return () => subscription.unsubscribe();
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchUserProfile(session.user.id)
+          .then((profileData) => {
+            if (!mounted) return;
+            const typedProfile: UserProfile = {
+              ...profileData,
+              tier: (profileData.tier === 'Premium' ? 'Premium' : 'Free') as "Free" | "Premium",
+              status: (profileData.status === 'Influencer' ? 'Influencer' : 'Normal') as "Normal" | "Influencer",
+              role: (profileData.role || 'user') as "user" | "admin"
+            };
+            setProfile(typedProfile);
+          })
+          .catch(console.error)
+          .finally(() => {
+            if (mounted) setIsLoading(false);
+          });
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    // Check for referral code in URL (non-blocking)
+    checkAndApplyReferralFromUrl().then((result) => {
+      if (result?.success && mounted) {
+        toast.success(result.message);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const value = {
