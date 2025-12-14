@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // Constants for Spotify API
-const SPOTIFY_CLIENT_ID = "9590f00f4f6b4fc080b08c85dc699e9f";
+const SPOTIFY_CLIENT_ID = "dbfe64aeca574f388aa26694838050b8";
 const SPOTIFY_REDIRECT_URI = `${window.location.origin}/spotify/callback`;
 const SPOTIFY_SCOPES = [
   "user-read-private",
