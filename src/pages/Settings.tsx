@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -85,7 +86,7 @@ type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 const Settings = () => {
   const location = useLocation();
-  const { profile, updateUserProfile } = useAuth();
+  const { profile, updateUserProfile, user: authUser } = useAuth();
   const { user } = useProfile();
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -93,6 +94,13 @@ const Settings = () => {
   const [deleteAccountDialogOpen, setDeleteAccountDialogOpen] = useState(false);
   const [notificationChannel, setNotificationChannel] = useState<string>("email");
   const [spotifyConnecting, setSpotifyConnecting] = useState(false);
+  const [spotifyData, setSpotifyData] = useState<{
+    display_name: string | null;
+    email: string | null;
+    is_premium: boolean | null;
+    product: string | null;
+    created_at: string | null;
+  } | null>(null);
   
   const [services, setServices] = useState<ConnectedService[]>([
     {
@@ -115,6 +123,33 @@ const Settings = () => {
     emailUpdates: true,
     marketingEmails: false,
   });
+
+  // Fetch Spotify connection status on mount
+  useEffect(() => {
+    const fetchSpotifyStatus = async () => {
+      if (!authUser?.id) return;
+      
+      const { data, error } = await supabase
+        .from('connected_services')
+        .select('display_name, email, is_premium, product, created_at')
+        .eq('user_id', authUser.id)
+        .eq('service_name', 'spotify')
+        .single();
+      
+      if (data && !error) {
+        setSpotifyData(data);
+        setServices(prevServices => 
+          prevServices.map(service => 
+            service.id === 'spotify' 
+              ? { ...service, connected: true, status: 'connected' } 
+              : service
+          )
+        );
+      }
+    };
+    
+    fetchSpotifyStatus();
+  }, [authUser?.id]);
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -215,16 +250,40 @@ const Settings = () => {
     }
   };
   
-  const handleDisconnectService = (serviceId: string) => {
-    setServices(prevServices => 
-      prevServices.map(service => 
-        service.id === serviceId 
-          ? { ...service, connected: false, status: 'disconnected' } 
-          : service
-      )
-    );
-    
-    toast.success(`Disconnected from ${serviceId === 'spotify' ? 'Spotify' : 'Apple Music'}`);
+  const handleDisconnectService = async (serviceId: string) => {
+    if (serviceId === 'spotify' && authUser?.id) {
+      try {
+        const { error } = await supabase
+          .from('connected_services')
+          .delete()
+          .eq('user_id', authUser.id)
+          .eq('service_name', 'spotify');
+        
+        if (error) throw error;
+        
+        setSpotifyData(null);
+        setServices(prevServices => 
+          prevServices.map(service => 
+            service.id === serviceId 
+              ? { ...service, connected: false, status: 'disconnected' } 
+              : service
+          )
+        );
+        toast.success('Disconnected from Spotify');
+      } catch (error) {
+        console.error('Error disconnecting Spotify:', error);
+        toast.error('Failed to disconnect Spotify');
+      }
+    } else {
+      setServices(prevServices => 
+        prevServices.map(service => 
+          service.id === serviceId 
+            ? { ...service, connected: false, status: 'disconnected' } 
+            : service
+        )
+      );
+      toast.success(`Disconnected from ${serviceId === 'applemusic' ? 'Apple Music' : serviceId}`);
+    }
   };
   
   const handleToggleNotification = (key: string) => {
@@ -660,10 +719,17 @@ const Settings = () => {
                                     Connected
                                   </Badge>
                                 )}
+                                {service.id === 'spotify' && spotifyData?.is_premium && (
+                                  <Badge className="ml-2 bg-[#1DB954] text-white">
+                                    Premium
+                                  </Badge>
+                                )}
                               </h3>
                               <p className="text-sm text-muted-foreground">
                                 {service.connected
-                                  ? `Connected since ${new Date().toLocaleDateString()}`
+                                  ? service.id === 'spotify' && spotifyData
+                                    ? `${spotifyData.display_name || spotifyData.email} • Connected ${new Date(spotifyData.created_at!).toLocaleDateString()}`
+                                    : `Connected since ${new Date().toLocaleDateString()}`
                                   : service.status === 'pending' || spotifyConnecting
                                   ? "Connection in progress..." 
                                   : "Not connected"}
