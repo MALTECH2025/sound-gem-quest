@@ -1,7 +1,7 @@
 
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, ListChecks, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, ListChecks, ChevronRight, Music } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Separator } from '@/components/ui/separator';
@@ -30,6 +30,11 @@ const AdminLayout = ({ children, title = "Dashboard", description }: AdminLayout
       name: 'Tasks',
       href: '/admin/tasks',
       icon: <ListChecks className="w-4 h-4 mr-2" />
+    },
+    {
+      name: 'Spotify Stats',
+      href: '/admin/spotify',
+      icon: <Music className="w-4 h-4 mr-2" />
     }
   ];
 
