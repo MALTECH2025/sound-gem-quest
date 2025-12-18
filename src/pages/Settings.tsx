@@ -47,7 +47,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/context/ProfileContext';
 import { toast } from '@/lib/toast';
 import { initiateSpotifyAuth, handleSpotifyCallback } from '@/integrations/spotify/spotifyApi';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 
 interface ConnectedService {
   id: string;
@@ -737,13 +737,24 @@ const Settings = () => {
                             </div>
                           </div>
                           {service.connected ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDisconnectService(service.id)}
-                            >
-                              Disconnect
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              {service.id === 'spotify' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  asChild
+                                >
+                                  <Link to="/spotify-history">View History</Link>
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDisconnectService(service.id)}
+                              >
+                                Disconnect
+                              </Button>
+                            </div>
                           ) : (
                             <Button
                               variant={service.status === 'pending' || spotifyConnecting ? "outline" : "default"}
