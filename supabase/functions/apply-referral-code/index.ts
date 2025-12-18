@@ -115,27 +115,36 @@ serve(async (req) => {
     const referralPoints = 10;
 
     // Start transaction-like operations
-    console.log('Creating referral record...');
+    console.log('Creating referral record for user:', user.id, 'referrer:', referralData.referrer_id);
 
     // Create referral record
-    const { error: referredError } = await supabase
+    const { data: insertedReferral, error: referredError } = await supabase
       .from("referred_users")
       .insert({
         referrer_id: referralData.referrer_id,
         referred_user_id: user.id,
         referral_code: cleanReferralCode,
         points_awarded: true,
-      });
+      })
+      .select()
+      .single();
 
     if (referredError) {
       console.error('Error creating referral record:', referredError);
+      // Check for duplicate entry
+      if (referredError.code === '23505') {
+        return new Response(
+          JSON.stringify({ success: false, message: "You have already used a referral code" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
       return new Response(
-        JSON.stringify({ success: false, message: "Failed to process referral" }),
+        JSON.stringify({ success: false, message: "Failed to process referral: " + referredError.message }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
 
-    console.log('Referral record created successfully');
+    console.log('Referral record created successfully:', insertedReferral);
 
     // Get and update referrer's points
     const { data: referrerProfile, error: referrerGetError } = await supabase

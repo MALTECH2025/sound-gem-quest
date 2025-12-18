@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowRight, Mail, Lock, User, UserPlus, LogIn } from 'lucide-react';
+import { ArrowRight, Mail, Lock, User, UserPlus, LogIn, Gift } from 'lucide-react';
 import { AnimatedTransition } from '@/components/ui/AnimatedTransition';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/lib/toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Login = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'register' | 'reset'>('login');
@@ -21,6 +22,20 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, register, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // Get referral code from URL
+  const referralCode = searchParams.get('ref');
+  
+  // Store referral code in localStorage when present
+  useEffect(() => {
+    if (referralCode) {
+      console.log('Referral code detected on login page:', referralCode);
+      localStorage.setItem('pendingReferralCode', referralCode.toUpperCase());
+      // Default to register tab when referral code is present
+      setActiveTab('register');
+    }
+  }, [referralCode]);
   
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
@@ -142,15 +157,24 @@ const Login = () => {
           </Link>
           
           <Card className="w-full max-w-md shadow-lg">
+            {referralCode && (
+              <Alert className="m-4 mb-0 border-primary/30 bg-primary/10">
+                <Gift className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-foreground">
+                  You've been referred! Sign up to earn <strong>10 bonus ST Coins</strong>!
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <CardHeader className="space-y-1 text-center">
               <CardTitle className="text-2xl font-bold">
                 {activeTab === 'login' && 'Welcome back'}
-                {activeTab === 'register' && 'Create an account'}
+                {activeTab === 'register' && (referralCode ? 'Join & Earn Rewards!' : 'Create an account')}
                 {activeTab === 'reset' && 'Reset your password'}
               </CardTitle>
               <CardDescription>
                 {activeTab === 'login' && 'Enter your credentials to sign in to your account'}
-                {activeTab === 'register' && 'Fill in the form below to create your account'}
+                {activeTab === 'register' && (referralCode ? 'Your friend invited you to earn crypto rewards!' : 'Fill in the form below to create your account')}
                 {activeTab === 'reset' && 'Enter your email to receive a password reset link'}
               </CardDescription>
             </CardHeader>

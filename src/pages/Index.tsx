@@ -40,10 +40,14 @@ const Index = () => {
   }, [isAuthenticated]);
 
   const handleGetStarted = () => {
+    // Preserve referral code when navigating to login
+    const urlParams = new URLSearchParams(window.location.search);
+    const referralCode = urlParams.get('ref');
+    
     if (isAuthenticated) {
       navigate('/dashboard');
     } else {
-      navigate('/login');
+      navigate(referralCode ? `/login?ref=${referralCode}` : '/login');
     }
   };
 
