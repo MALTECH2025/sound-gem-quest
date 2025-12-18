@@ -123,19 +123,31 @@ export const checkAndApplyReferralFromUrl = async () => {
   if (referralCode) {
     console.log('Referral code found in URL:', referralCode);
     
-    // Store in localStorage for later application after login
-    localStorage.setItem('pendingReferralCode', referralCode);
+    // Always store in localStorage for application after signup/login
+    localStorage.setItem('pendingReferralCode', referralCode.toUpperCase());
     
     // If user is already logged in, apply immediately
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      console.log('User is logged in, applying referral code now...');
       try {
         const result = await applyReferralCode(referralCode);
-        localStorage.removeItem('pendingReferralCode');
+        if (result.success) {
+          localStorage.removeItem('pendingReferralCode');
+          // Clean URL without full page reload
+          const url = new URL(window.location.href);
+          url.searchParams.delete('ref');
+          window.history.replaceState({}, '', url.toString());
+        }
         return result;
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error applying referral code from URL:', error);
-        // Keep the code in localStorage for retry after login
+        // Keep the code in localStorage for retry after login if it's not a permanent failure
+        if (error.message?.includes('Invalid referral code') || 
+            error.message?.includes('already used') ||
+            error.message?.includes('your own')) {
+          localStorage.removeItem('pendingReferralCode');
+        }
         return { success: false, message: error.message };
       }
     }
@@ -148,21 +160,31 @@ export const checkAndApplyReferralFromUrl = async () => {
 export const applyPendingReferralCode = async () => {
   const pendingCode = localStorage.getItem('pendingReferralCode');
   
-  if (pendingCode) {
-    console.log('Applying pending referral code:', pendingCode);
-    try {
-      const result = await applyReferralCode(pendingCode);
-      localStorage.removeItem('pendingReferralCode');
-      return result;
-    } catch (error) {
-      console.error('Error applying pending referral code:', error);
-      // Remove invalid codes but keep valid ones for retry
-      if (error.message?.includes('Invalid referral code') || error.message?.includes('already used')) {
-        localStorage.removeItem('pendingReferralCode');
-      }
-      return { success: false, message: error.message };
-    }
+  if (!pendingCode) {
+    console.log('No pending referral code found');
+    return null;
   }
   
-  return null;
+  console.log('Applying pending referral code:', pendingCode);
+  
+  // Small delay to ensure user profile is created first
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  try {
+    const result = await applyReferralCode(pendingCode);
+    if (result.success) {
+      localStorage.removeItem('pendingReferralCode');
+      console.log('Pending referral code applied successfully');
+    }
+    return result;
+  } catch (error: any) {
+    console.error('Error applying pending referral code:', error);
+    // Remove invalid codes but keep valid ones for retry
+    if (error.message?.includes('Invalid referral code') || 
+        error.message?.includes('already used') ||
+        error.message?.includes('your own')) {
+      localStorage.removeItem('pendingReferralCode');
+    }
+    return { success: false, message: error.message };
+  }
 };
